@@ -1,0 +1,112 @@
+{
+  "namespace": "wekan.export",
+  "definitions": {
+    "wekan.export.Cards": {
+      "kind": "entity",
+      "elements": {
+        "_id": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "title": {
+          "type": "cds.String"
+        },
+        "lineofbusiness": {
+          "type": "cds.String"
+        },
+        "lace": {
+          "type": "cds.String"
+        },
+        "list": {
+          "type": "cds.String"
+        },
+        "swimlane": {
+          "type": "cds.String"
+        },
+        "type": {
+          "type": "cds.String"
+        },
+        "archived": {
+          "type": "cds.String"
+        },
+        "createdat": {
+          "type": "cds.String"
+        },
+        "modifiedat": {
+          "type": "cds.String"
+        },
+        "datelastactivity": {
+          "type": "cds.String"
+        },
+        "requestedby": {
+          "type": "cds.String"
+        },
+        "creator": {
+          "type": "cds.String"
+        }
+      }
+    },
+    "CatalogService": {
+      "@source": "srv/cat-service.cds",
+      "kind": "service"
+    },
+    "CatalogService.Cards": {
+      "kind": "entity",
+      "@readonly": true,
+      "projection": {
+        "from": {
+          "ref": [
+            "wekan.export.Cards"
+          ]
+        }
+      },
+      "elements": {
+        "_id": {
+          "key": true,
+          "type": "cds.String"
+        },
+        "title": {
+          "type": "cds.String"
+        },
+        "lineofbusiness": {
+          "type": "cds.String"
+        },
+        "lace": {
+          "type": "cds.String"
+        },
+        "list": {
+          "type": "cds.String"
+        },
+        "swimlane": {
+          "type": "cds.String"
+        },
+        "type": {
+          "type": "cds.String"
+        },
+        "archived": {
+          "type": "cds.String"
+        },
+        "createdat": {
+          "type": "cds.String"
+        },
+        "modifiedat": {
+          "type": "cds.String"
+        },
+        "datelastactivity": {
+          "type": "cds.String"
+        },
+        "requestedby": {
+          "type": "cds.String"
+        },
+        "creator": {
+          "type": "cds.String"
+        }
+      }
+    }
+  },
+  "meta": {
+    "creator": "CDS Compiler v2.5.0",
+    "flavor": "inferred"
+  },
+  "$version": "2.0"
+}

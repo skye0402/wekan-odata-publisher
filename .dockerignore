@@ -1,0 +1,8 @@
+README.md
+*.code-workspace
+.gitignore
+Dockerfile
+app
+.git
+.vscode
+dbdata
