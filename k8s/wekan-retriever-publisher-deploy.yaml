@@ -1,0 +1,89 @@
+# This deploys the data retrieval as well as the publisher part
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wekan-retriever-publisher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wekan-retriever-publisher
+  template:
+    metadata:
+      labels:
+        app: wekan-retriever-publisher
+        version: v1
+    spec:
+      volumes:
+      - name: dbdata
+        emptyDir: {}
+      containers:
+      # WeKan data retriever container
+      - name: wekan-retriever-container
+        image: gunter04/wekanretriever:latest
+        imagePullPolicy: Always
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+        volumeMounts:
+        - mountPath: /code/dbdata
+          name: dbdata      
+      # OData publisher container
+      - name: wekan-publisher-container
+        image: gunter04/wekanpublisher:latest
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: 4004
+          name: http
+        volumeMounts:
+        - mountPath: /usr/src/app/dbdata
+          name: dbdata
+        command: ['sh', '-c', "while [ ! -f /usr/src/app/dbdata/data-model.cds ] ; do echo Waiting for data model; sleep 5; done; cp /usr/src/app/dbdata/data-model.cds /usr/src/app/db/data-model.cds; echo Updated db model.; cd /usr/src/app; npm start"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wekan-publisher-service
+  labels:
+    app: wekan-retriever-publisher
+spec:
+  ports:
+  - port: 4004
+    name: http
+    targetPort: 4004
+  selector:
+    app: wekan-retriever-publisher
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: wekan-publisher-api-rule
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: wekan-publisher-service
+    port: 4004
+    host: wekan-publisher-api
+  rules:
+    - accessStrategies:
+        - config:
+            required_scope:
+            - wekandatascope
+          handler: oauth2_introspection
+      methods:
+      - GET
+      path: /.*
