@@ -17,6 +17,9 @@ spec:
       volumes:
       - name: dbdata
         emptyDir: {}
+      - name: wekan-retriever-configmap
+        configMap: 
+          name: wekan-retriever-configfile
       containers:
       # WeKan data retriever container
       - name: wekan-retriever-container
@@ -25,6 +28,16 @@ spec:
         env:
         - name: PYTHONUNBUFFERED
           value: "1"
+        - name: USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: wekan-retriever-secret
+              key: username
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wekan-retriever-secret
+              key: password
         resources:
           limits:
             memory: "128Mi"
@@ -34,7 +47,9 @@ spec:
             cpu: "250m"
         volumeMounts:
         - mountPath: /code/dbdata
-          name: dbdata      
+          name: dbdata    
+        - mountPath: /code/config
+          name: wekan-retriever-configmap   
       # OData publisher container
       - name: wekan-publisher-container
         image: gunter04/wekanpublisher:latest
@@ -52,7 +67,7 @@ spec:
         volumeMounts:
         - mountPath: /usr/src/app/dbdata
           name: dbdata
-        command: ['sh', '-c', "while [ ! -f /usr/src/app/dbdata/data-model.cds ] ; do echo Waiting for data model; sleep 5; done; cp /usr/src/app/dbdata/data-model.cds /usr/src/app/db/data-model.cds; echo Updated db model.; cd /usr/src/app; npm start"]
+        command: ['sh', '-c', "while [ ! -f /usr/src/app/dbdata/data-model.cds ] ; do echo Waiting for data model; sleep 5; done; mv /usr/src/app/dbdata/data-model.cds /usr/src/app/db/data-model.cds; echo Updated db model.; cd /usr/src/app; npm start"]
 ---
 apiVersion: v1
 kind: Service
@@ -87,3 +102,42 @@ spec:
       methods:
       - GET
       path: /.*
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wekan-retriever-configfile
+data:
+  settings.cfg: |
+    # Server related information
+    [server]
+    #wekanUrl = https://wekantest.c-290ae5b.kyma.shoot.live.k8s-hana.ondemand.com/
+    wekanUrl = https://wekanprod.c-88f9b3a.kyma.shoot.live.k8s-hana.ondemand.com/
+    refreshTimer = 300 # sleeping time in seconds until next polling of data 
+
+    # Any master data needed specific to a board
+    [masterdata]
+    #boardId = ZmDQd5HgrFJiX2QnE
+    boardId = dLh5fkB7yMhavmxwB
+
+    # This defines potential consolidation of lists and their type
+    [mapping]
+    M001 = New Arrivals ✨,NEW,Incoming
+    M002 = In Progress 🏃,WIP,In Progress
+    M003 = Pending for Input 🅿,PARK,Pending
+    M004 = Pending for Review 🅿,PARK,Pending
+    M005 = Completed 🏁,DONE,Completed
+    M006 = Delivered 🅿,PARK,Pending
+    M007 = Engagement Review 🏃,WIP,Post-Delivery Activity
+    M008 = Innopedia Entry 🏃,WIP,Post-Delivery Activity
+    M009 = Collect evidence 🏃,WIP,Post-Delivery Activity
+    M010 = Discarded 🚮,SCRAP,Discarded
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wekan-retriever-secret
+type: kubernetes.io/basic-auth
+stringData:
+  username: yyyyyyyyyy
+  password: xxxxxxxxxx
